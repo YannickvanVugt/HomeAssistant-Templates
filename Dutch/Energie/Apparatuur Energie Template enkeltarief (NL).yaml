@@ -1,0 +1,221 @@
+#Vervang <...> door de waarde die je wenst te gebruiken. Sensor entity namen kunnen geen hoofdletters bevatten.
+#<apparaat_sensornaam> - Apparaatnaam in sensors.
+#<Apparaat-Weergavenaam> - Apparaat weergavenaam.
+#<Valuta> - Verander de valuta output naar de correcte eenheid. De eenheid komt altijd achter de output waarde van de sensor.
+
+input_number:                       #Verwijder het input_number blok als je al een stroom prijs input hebt.
+  stroom_prijs:                         #Vul bij initial de stroom prijs in.
+    name: Stroom prijs
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    step: 0.001
+    unit_of_measurement: "€/kWh"
+
+sensor wattage-naar-kwh:            #De Integration sensor kan gebruikt worden als je apparaat of slimme stekker geen totaal verbruik bij houd. Als je apparaat of stekker deze wel heeft, kun je dit gehele blok verwijderen.
+  - platform: integration
+    source: #Wattage Bron Sensor -> Vul hier de wattage sensor in van het apparaat of de slimme stekker.
+    name: #Wattage naar kWh sensor naam (Entity id) -> Deze zal gebruik worden als de utility_meter bron kwh sensors.
+    unit_prefix: k
+    round: 2
+    method: left
+    
+utility_meter:          ###### STROOMMETER WAARDES ######
+  <apparaat_sensornaam>_stroom_verbruik_per_uur:
+    source: #Vul hier het entity id in van de kWh sensor van het apparaat zelf, een slimme stekker of de integration sensor hierboven.
+    cycle: hourly
+  <apparaat_sensornaam>_stroom_verbruik_dagelijks:
+    source: #Vul hier het entity id in van de kWh sensor van het apparaat zelf, een slimme stekker of de integration sensor hierboven.
+    cycle: daily
+  <apparaat_sensornaam>_stroom_verbruik_wekelijks:
+    source: #Vul hier het entity id in van de kWh sensor van het apparaat zelf, een slimme stekker of de integration sensor hierboven.
+    cycle: weekly
+  <apparaat_sensornaam>_stroom_verbruik_maandelijks:
+    source: #Vul hier het entity id in van de kWh sensor van het apparaat zelf, een slimme stekker of de integration sensor hierboven.
+    cycle: monthly
+  <apparaat_sensornaam>_stroom_verbruik_jaarlijks:
+    source: #Vul hier het entity id in van de kWh sensor van het apparaat zelf, een slimme stekker of de integration sensor hierboven.
+    cycle: yearly
+    
+homeassistant:
+  customize:
+    sensor.<apparaat_sensornaam>_stroom_verbruik_per_uur:
+      friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik per uur
+    sensor.<apparaat_sensornaam>_stroom_verbruik_dagelijks:
+      friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik dagelijks
+    sensor.<apparaat_sensornaam>_stroom_verbruik_wekelijks:
+      friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik wekelijks
+    sensor.<apparaat_sensornaam>_stroom_verbruik_maandelijks:
+      friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik maandelijks
+    sensor.<apparaat_sensornaam>_stroom_verbruik_jaarlijks:
+      friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik jaarlijks
+
+sensor:
+  - platform: template
+    sensors:
+      # BEREKENINGEN
+      <apparaat_sensornaam>_stroom_momenteel_verbruik_watt:                #Voeg je apparaat stroom verbruik sensor hier toe. Als de input in Watt is, verwijder "* 1000".
+        friendly_name: "<Apparaat-Weergavenaam> - Momenteel verbruik"
+        icon_template: mdi:flash
+        unit_of_measurement: "Watt"
+        value_template: "{{ (states.sensor.<apparaat_wattage_bron_sensor>.state | float * 1000) | round(0) }}"
+      <apparaat_sensornaam>_stroom_momenteel_verbruik_kilowatt:            #Voeg je apparaat stroom verbruik sensor hier toe. Als de input in Watt is, voeg " / 1000" tussen "float" and ")" toe.
+        friendly_name: "<Apparaat-Weergavenaam> - Momenteel verbruik"
+        icon_template: mdi:flash
+        unit_of_measurement: "kW"
+        value_template: "{{ (states.sensor.<apparaat_wattage_bron_sensor>.state | float) | round(0) }}"
+
+      # GEMIDDELDES
+      <apparaat_sensornaam>_stroom_verbruik_gemiddeld_per_dag:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik gemiddeld/dag
+        icon_template: mdi:home-analytics
+        unit_of_measurement: "kWh"
+        value_template: >-
+          {% set a = states('sensor.<apparaat_sensornaam>_stroom_verbruik_vorige_maand') | float %}
+          {{ (a / 30.41) | round(3) }}
+
+      # STROOM LAATSTE PERIODE
+      <apparaat_sensornaam>_stroom_verbruik_gisteren:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik gisteren
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.<apparaat_sensornaam>_stroom_verbruik_dagelijks','last_period')|float }}"
+      <apparaat_sensornaam>_stroom_verbruik_vorige_week:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik vorige week
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.<apparaat_sensornaam>_stroom_verbruik_wekelijks','last_period')|float }}"
+      <apparaat_sensornaam>_stroom_verbruik_vorige_maand:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik vorige maand
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.<apparaat_sensornaam>_stroom_verbruik_maandelijks','last_period')|float }}"
+      <apparaat_sensornaam>_stroom_verbruik_vorig_jaar:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik vorig jaar
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.<apparaat_sensornaam>_stroom_verbruik_jaarlijks','last_period')|float }}"
+
+      # STROOM KORT
+      <apparaat_sensornaam>_stroom_verbruik_dagelijks_kort:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik dagelijks
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<apparaat_sensornaam>_stroom_verbruik_dagelijks') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <apparaat_sensornaam>_stroom_verbruik_gisteren_kort:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik gisteren
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<apparaat_sensornaam>_stroom_verbruik_gisteren') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <apparaat_sensornaam>_stroom_verbruik_wekelijks_kort:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik wekelijks
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<apparaat_sensornaam>_stroom_verbruik_wekelijks') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <apparaat_sensornaam>_stroom_verbruik_vorige_week_kort:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik vorige week
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<apparaat_sensornaam>_stroom_verbruik_vorige_week') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <apparaat_sensornaam>_stroom_verbruik_maandelijks_kort:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik maandelijks
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<apparaat_sensornaam>_stroom_verbruik_maandelijks') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <apparaat_sensornaam>_stroom_verbruik_vorige_maand_kort:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik vorige maand
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<apparaat_sensornaam>_stroom_verbruik_vorige_maand') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <apparaat_sensornaam>_stroom_verbruik_jaarlijks_kort:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik jaarlijks
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<apparaat_sensornaam>_stroom_verbruik_jaarlijks') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <apparaat_sensornaam>_stroom_verbruik_vorig_jaar_kort:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom verbruik vorig jaar
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<apparaat_sensornaam>_stroom_verbruik_vorig_jaar') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      # STROOM KOSTEN
+      <apparaat_sensornaam>_stroom_kosten_vandaag:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom kosten vandaag
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.<apparaat_sensornaam>_stroom_verbruik_dagelijks') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {{ (a * b) | round(2) }}
+
+      <apparaat_sensornaam>_stroom_kosten_gisteren:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom kosten gisteren
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.<apparaat_sensornaam>_stroom_verbruik_gisteren') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {{ (a * b) | round(2) }}
+
+      <apparaat_sensornaam>_stroom_kosten_deze_week:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom kosten deze week
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.<apparaat_sensornaam>_stroom_verbruik_wekelijks') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {{ (a * b) | round(2) }}
+
+      <apparaat_sensornaam>_stroom_kosten_vorige_week:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom kosten vorige week
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.<apparaat_sensornaam>_stroom_verbruik_vorige_week') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {{ (a * b) | round(2) }}
+
+      <apparaat_sensornaam>_stroom_kosten_deze_maand:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom kosten deze maand
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.<apparaat_sensornaam>_stroom_verbruik_maandelijks') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {{ (a * b) | round(2) }}
+
+      <apparaat_sensornaam>_stroom_kosten_vorige_maand:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom kosten vorige maand
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.<apparaat_sensornaam>_stroom_verbruik_vorige_maand') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {{ (a * b) | round(2) }}
+
+      <apparaat_sensornaam>_stroom_kosten_dit_jaar:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom kosten dit jaar
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.<apparaat_sensornaam>_stroom_verbruik_jaarlijks') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {{ (a * b) | round(2) }}
+
+      <apparaat_sensornaam>_stroom_kosten_vorig_jaar:
+        friendly_name: <Apparaat-Weergavenaam> - Stroom kosten vorig jaar
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.<apparaat_sensornaam>_stroom_verbruik_vorig_jaar') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {{ (a * b) | round(2) }}

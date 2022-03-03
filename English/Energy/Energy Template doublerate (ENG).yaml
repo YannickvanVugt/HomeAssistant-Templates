@@ -1,0 +1,545 @@
+#Replace <...> by the value you wish to use. Sensor entity names can not contain capital letters.
+#<Currency> - Change currency output to the correct unit. The unit is always displayed behind the output value of the sensor.
+#<gas_consumption_unit> - eg. m3 or ft3.
+
+input_number:
+  power_price_peakrate:                 #Enter the power price for peakrate at initials and adjust unit_of_measurement.
+    name: Power price peakrate
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    step: 0.001
+    unit_of_measurement: "€/kWh"
+  power_price_offpeakrate:              #Enter the power price for off-peakrate at initials and adjust unit_of_measurement.
+    name: Power price off-peakrate
+    icon: mdi:currency-eur-off
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    step: 0.001
+    unit_of_measurement: "€/kWh"
+  power_grid_operator_cost:             #Enter the grid operator cost at initials and adjust unit_of_measurement.
+    name: Power grid operator cost
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    mode: box
+    step: 0.01
+    unit_of_measurement: "€/year"
+  power_fixed_delivery_cost:            #Enter the fixed delivery cost per year at initials and adjust unit_of_measurement.
+    name: Power fixed delivery cost
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0.00
+    max: 9999.00
+    mode: box
+    step: 0.01
+    unit_of_measurement: "€/year"
+  power_reduction_tax:                  #Enter the reduction tax per year at initials and adjust unit_of_measurement.
+    name: Power reduction tax
+    icon: mdi:currency-eur-off
+    mode: box
+    initial: -
+    min: -9999.00
+    max: 0
+    mode: box
+    step: 0.01
+    unit_of_measurement: "€/year"
+
+  # GAS RATE
+  gas_price:                            #Enter the gas price at initials and adjust unit_of_measurement.
+    name: Gas price
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    mode: box
+    step: 0.001
+    unit_of_measurement: "€/m3"
+  gas_grid_operator_costs:              #Enter the grid operator cost at initials and adjust unit_of_measurement.
+    name: Gas grid operator costs
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    mode: box
+    step: 0.01
+    unit_of_measurement: "€/year"
+  gas_fixed_delivery_costs:             #Enter the fixed delivery cost per year at initials and adjust unit_of_measurement.
+    name: Gas fixed delivery costs
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    mode: box
+    step: 0.01
+    unit_of_measurement: "€/year"
+
+utility_meter:          ###### POWERMETER VALUES ######
+  power_consumption_hourly_peak:
+    source: #Enter the entity id of your kWh power consumption sensor for peakrate here.
+    cycle: hourly
+  power_consumption_hourly_offpeak:
+    source: #Enter the entity id of your kWh power consumption sensor for off-peakrate here.
+    cycle: hourly
+  gas_consumption_hourly:
+    source: #Enter the entity id of your gas consumption sensor here.
+    cycle: hourly
+
+  power_consumption_daily_peak:
+    source: #Enter the entity id of your kWh power consumption sensor for peakrate here.
+    cycle: daily
+  power_consumption_daily_offpeak:
+    source: #Enter the entity id of your kWh power consumption sensor for off-peakrate here.
+    cycle: daily
+  gas_consumption_daily:
+    source: #Enter the entity id of your gas consumption sensor here.
+    cycle: daily
+
+  power_consumption_weekly_peak:
+    source: #Enter the entity id of your kWh power consumption sensor for peakrate here.
+    cycle: weekly
+  power_consumption_weekly_offpeak:
+    source: #Enter the entity id of your kWh power consumption sensor for off-peakrate here.
+    cycle: weekly
+  gas_consumption_weekly:
+    source: #Enter the entity id of your gas consumption sensor here.
+    cycle: weekly
+
+  power_consumption_monthly_peak:
+    source: #Enter the entity id of your kWh power consumption sensor for peakrate here.
+    cycle: monthly
+  power_consumption_monthly_offpeak:
+    source: #Enter the entity id of your kWh power consumption sensor for off-peakrate here.
+    cycle: monthly
+  gas_consumption_monthly:
+    source: #Enter the entity id of your gas consumption sensor here.
+    cycle: monthly
+
+  power_consumption_yearly_peak:
+    source: #Enter the entity id of your kWh power consumption sensor for peakrate here.
+    cycle: yearly
+  power_consumption_yearly_offpeak:
+    source: #Enter the entity id of your kWh power consumption sensor for off-peakrate here.
+    cycle: yearly
+  gas_consumption_yearly:
+    source: #Enter the entity id of your gas consumption sensor here.
+    cycle: yearly
+
+sensor:
+  - platform: template
+    sensors:
+      power_current_rate:           #Enter the entity ID of the current tariff sensor of your power grid meter and adjust output values below.
+        friendly_name: "Current rate"
+        icon_template: mdi:flash
+        value_template: >-
+          {% if is_state('sensor.power_tariff', 'normal') %}
+            Peakrate
+          {% elif is_state('sensor.power_tariff', 'low') %}
+            Off-peak rate
+          {% else %}
+            Unknown
+          {% endif %}
+
+      # CALCULATIONS
+      power_current_consumption_watt:               #Add your power consumption sensor here. If input is in Watt, remove "* 1000".
+        friendly_name: "Current consumption"
+        icon_template: mdi:flash
+        unit_of_measurement: "Watt"
+        value_template: "{{ (states.sensor.power_consumption.state | float * 1000) | round(0) }}"
+      power_current_consumption_kilowatt:           #Add your power consumption sensor here. If input is in Watt, add " / 1000" between "float" and ")".
+        friendly_name: "Current consumption"
+        icon_template: mdi:flash
+        unit_of_measurement: "kW"
+        value_template: "{{ (states.sensor.power_consumption.state | float) | round(0) }}"
+
+      # AVERAGES
+      power_consumption_average_per_day:
+        friendly_name: Power consumption average/day
+        icon_template: mdi:home-analytics
+        unit_of_measurement: "kWh"
+        value_template: >-
+          {% set a = states('sensor.power_consumption_last_month') | float %}
+          {{ (a / 30.41) | round(3) }}
+      gas_consumption_average_per_day:
+        friendly_name: Gas consumption average/day
+        icon_template: mdi:home-analytics
+        unit_of_measurement: "<gas_consumption_unit>"
+        value_template: >-
+          {% set a = states('sensor.gas_consumption_last_month') | float %}
+          {{ (a / 30.41) | round(3) }}
+
+      # CALCULATION POWER PEAK + OFFPEAK
+      power_consumption_hourly:
+        friendly_name: Power consumption hourly
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ states('sensor.power_consumption_hourly_peak')|float + states('sensor.power_consumption_hourly_offpeak')|float }}"
+      power_consumption_daily:
+        friendly_name: Power consumption daily
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ states('sensor.power_consumption_daily_peak')|float + states('sensor.power_consumption_daily_offpeak')|float }}"
+      power_consumption_weekly:
+        friendly_name: Power consumption weekly
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ states('sensor.power_consumption_weekly_peak')|float + states('sensor.power_consumption_weekly_offpeak')|float }}"
+      power_consumption_monthly:
+        friendly_name: Power consumption monthly
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ states('sensor.power_consumption_monthly_peak')|float + states('sensor.power_consumption_monthly_offpeak')|float }}"
+      power_consumption_yearly:
+        friendly_name: Power consumption yearly
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ states('sensor.power_consumption_yearly_peak')|float + states('sensor.power_consumption_yearly_offpeak')|float }}"
+
+      # POWER LAST PERIODS
+      power_consumption_yesterday:
+        friendly_name: Power consumption yesterday
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.power_consumption_daily_peak','last_period')|float + state_attr('sensor.power_consumption_daily_offpeak','last_period')|float }}"
+      power_consumption_last_week:
+        friendly_name: Power consumption last week
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.power_consumption_weekly_peak','last_period')|float + state_attr('sensor.power_consumption_weekly_offpeak','last_period')|float }}"
+      power_consumption_last_month:
+        friendly_name: Power consumption last month
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.power_consumption_monthly_peak','last_period')|float + state_attr('sensor.power_consumption_monthly_offpeak','last_period')|float }}"
+      power_consumption_last_year:
+        friendly_name: Power consumption last year
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.power_consumption_yearly_peak','last_period')|float + state_attr('sensor.power_consumption_yearly_offpeak','last_period')|float }}"
+
+      # POWER PEAK LAST PERIODS
+      power_consumption_yesterday_peak:
+        friendly_name: Power consumption yesterday peak
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.power_consumption_daily_peak','last_period')|float }}"
+      power_consumption_last_week_peak:
+        friendly_name: Power consumption last week peak
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.power_consumption_weekly_peak','last_period')|float }}"
+      power_consumption_last_month_peak:
+        friendly_name: Power consumption last month peak
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.power_consumption_monthly_peak','last_period')|float }}"
+      power_consumption_last_year_peak:
+        friendly_name: Power consumption last year peak
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.power_consumption_yearly_peak','last_period')|float }}"
+
+      # POWER OFFPEAK LAST PERIODS
+      power_consumption_yesterday_offpeak:
+        friendly_name: Power consumption yesterday offpeak
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.power_consumption_daily_offpeak','last_period')|float }}"
+      power_consumption_last_week_offpeak:
+        friendly_name: Power consumption last week offpeak
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.power_consumption_weekly_offpeak','last_period')|float }}"
+      power_consumption_last_month_offpeak:
+        friendly_name: Power consumption last month offpeak
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.power_consumption_monthly_offpeak','last_period')|float }}"
+      power_consumption_last_year_offpeak:
+        friendly_name: Power consumption last year offpeak
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.power_consumption_yearly_offpeak','last_period')|float }}"
+
+      # POWER SHORT
+      power_consumption_daily_short:
+        friendly_name: Power consumption daily
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.power_consumption_daily') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      power_consumption_yesterday_short:
+        friendly_name: Power consumption yesterday
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.power_consumption_yesterday') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      power_consumption_weekly_short:
+        friendly_name: Power consumption weekly
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.power_consumption_weekly') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      power_consumption_last_week_short:
+        friendly_name: Power consumption last week
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.power_consumption_last_week') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      power_consumption_monthly_short:
+        friendly_name: Power consumption monthly
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.power_consumption_monthly') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      power_consumption_last_month_short:
+        friendly_name: Power consumption last month
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.power_consumption_last_month') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      power_consumption_yearly_short:
+        friendly_name: Power consumption yearly
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.power_consumption_yearly') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      power_consumption_last_year_short:
+        friendly_name: Power consumption last year
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.power_consumption_last_year') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      # GAS LAST PERIODS
+      gas_consumption_yesterday:
+        friendly_name: Gas consumption yesterday
+        icon_template: mdi:counter
+        unit_of_measurement: <gas_consumption_unit>
+        value_template: "{{ state_attr('sensor.gas_consumption_daily','last_period') }}"
+      gas_consumption_last_week:
+        friendly_name: Gas consumption last week
+        icon_template: mdi:counter
+        unit_of_measurement: <gas_consumption_unit>
+        value_template: "{{ state_attr('sensor.gas_consumption_weekly','last_period') }}"
+      gas_consumption_last_month:
+        friendly_name: Gas consumption last month
+        icon_template: mdi:counter
+        unit_of_measurement: <gas_consumption_unit>
+        value_template: "{{ state_attr('sensor.gas_consumption_monthly','last_period') }}"
+      gas_consumption_last_year:
+        friendly_name: Gas consumption last year
+        icon_template: mdi:counter
+        unit_of_measurement: <gas_consumption_unit>
+        value_template: "{{ state_attr('sensor.gas_consumption_yearly','last_period') }}"
+
+      # POWER COSTS
+      power_cost_today:
+        friendly_name: Power cost today
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.power_consumption_daily_peak') | float %}
+          {% set b = states('input_number.power_price_peakrate') | float %}
+          {% set c = states('sensor.power_consumption_daily_offpeak') | float %}
+          {% set d = states('input_number.power_price_offpeakrate') | float %}
+          {% set e = states('input_number.power_grid_operator_cost') | float / 365 %}
+          {% set f = states('input_number.power_fixed_delivery_cost') | float / 365 %}
+          {% set g = states('input_number.power_reduction_tax') | float / 365 %}
+          {{ ((((a * b) + (c * d) + e) + f) + g) | round(2) }}
+
+      power_cost_yesterday:
+        friendly_name: Power cost yesterday
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.power_consumption_yesterday_peak') | float %}
+          {% set b = states('input_number.power_price_peakrate') | float %}
+          {% set c = states('sensor.power_consumption_yesterday_offpeak') | float %}
+          {% set d = states('input_number.power_price_offpeakrate') | float %}
+          {% set e = states('input_number.power_grid_operator_cost') | float / 365 %}
+          {% set f = states('input_number.power_fixed_delivery_cost') | float / 365 %}
+          {% set g = states('input_number.power_reduction_tax') | float / 365 %}
+          {{ ((((a * b) + (c * d) + e) + f) + g) | round(2) }}
+
+      power_cost_this_week:
+        friendly_name: Power cost this week
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.power_consumption_weekly_peak') | float %}
+          {% set b = states('input_number.power_price_peakrate') | float %}
+          {% set c = states('sensor.power_consumption_weekly_offpeak') | float %}
+          {% set d = states('input_number.power_price_offpeakrate') | float %}
+          {% set e = states('input_number.power_grid_operator_cost') | float / 52 %}
+          {% set f = states('input_number.power_fixed_delivery_cost') | float / 52 %}
+          {% set g = states('input_number.power_reduction_tax') | float / 52 %}
+          {{ ((((a * b) + (c * d) + e) + f) + g) | round(2) }}
+
+      power_cost_last_week:
+        friendly_name: Power cost last week
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.power_consumption_last_week_peak') | float %}
+          {% set b = states('input_number.power_price_peakrate') | float %}
+          {% set c = states('sensor.power_consumption_last_week_offpeak') | float %}
+          {% set d = states('input_number.power_price_offpeakrate') | float %}
+          {% set e = states('input_number.power_grid_operator_cost') | float / 52 %}
+          {% set f = states('input_number.power_fixed_delivery_cost') | float / 52 %}
+          {% set g = states('input_number.power_reduction_tax') | float / 52 %}
+          {{ ((((a * b) + (c * d) + e) + f) + g) | round(2) }}
+
+      power_cost_this_month:
+        friendly_name: Power cost this month
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.power_consumption_monthly_peak') | float %}
+          {% set b = states('input_number.power_price_peakrate') | float %}
+          {% set c = states('sensor.power_consumption_monthly_offpeak') | float %}
+          {% set d = states('input_number.power_price_offpeakrate') | float %}
+          {% set e = states('input_number.power_grid_operator_cost') | float / 12 %}
+          {% set f = states('input_number.power_fixed_delivery_cost') | float / 12 %}
+          {% set g = states('input_number.power_reduction_tax') | float / 12 %}
+          {{ ((((a * b) + (c * d) + e) + f) + g) | round(2) }}
+
+      power_cost_last_month:
+        friendly_name: Power cost last month
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.power_consumption_last_month_peak') | float %}
+          {% set b = states('input_number.power_price_peakrate') | float %}
+          {% set c = states('sensor.power_consumption_last_month_offpeak') | float %}
+          {% set d = states('input_number.power_price_offpeakrate') | float %}
+          {% set e = states('input_number.power_grid_operator_cost') | float / 12 %}
+          {% set f = states('input_number.power_fixed_delivery_cost') | float / 12 %}
+          {% set g = states('input_number.power_reduction_tax') | float / 12 %}
+          {{ ((((a * b) + (c * d) + e) + f) + g) | round(2) }}
+
+      power_cost_this_year:
+        friendly_name: Power cost this year
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.power_consumption_yearly_peak') | float %}
+          {% set b = states('input_number.power_price_peakrate') | float %}
+          {% set c = states('sensor.power_consumption_yearly_offpeak') | float %}
+          {% set d = states('input_number.power_price_offpeakrate') | float %}
+          {% set e = states('input_number.power_grid_operator_cost') | float %}
+          {% set f = states('input_number.power_fixed_delivery_cost') | float %}
+          {% set g = states('input_number.power_reduction_tax') | float %}
+          {{ ((((a * b) + (c * d) + e) + f) + g) | round(2) }}
+
+      power_cost_last_year:
+        friendly_name: Power cost last year
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.power_consumption_last_year_peak') | float %}
+          {% set b = states('input_number.power_price_peakrate') | float %}
+          {% set c = states('sensor.power_consumption_last_year_offpeak') | float %}
+          {% set d = states('input_number.power_price_offpeakrate') | float %}
+          {% set e = states('input_number.power_grid_operator_cost') | float %}
+          {% set f = states('input_number.power_fixed_delivery_cost') | float %}
+          {% set g = states('input_number.power_reduction_tax') | float %}
+          {{ ((((a * b) + (c * d) + e) + f) + g) | round(2) }}
+
+      #  GAS COST
+      gas_cost_today:
+        friendly_name: Gas cost today
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.gas_consumption_daily') | float %}
+          {% set b = states('input_number.gas_price') | float %}
+          {% set c = states('input_number.gas_grid_operator_costs') | float / 365 %}
+          {% set d = states('input_number.gas_fixed_delivery_costs') | float / 365 %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_cost_yesterday:
+        friendly_name: Gas cost yesterday
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.gas_consumption_yesterday') | float %}
+          {% set b = states('input_number.gas_price') | float %}
+          {% set c = states('input_number.gas_grid_operator_costs') | float / 365 %}
+          {% set d = states('input_number.gas_fixed_delivery_costs') | float / 365 %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_cost_this_week:
+        friendly_name: Gas cost this week
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.gas_consumption_weekly') | float %}
+          {% set b = states('input_number.gas_price') | float %}
+          {% set c = states('input_number.gas_grid_operator_costs') | float / 52 %}
+          {% set d = states('input_number.gas_fixed_delivery_costs') | float / 52 %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_cost_last_week:
+        friendly_name: Gas cost last week
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.gas_consumption_last_week') | float %}
+          {% set b = states('input_number.gas_price') | float %}
+          {% set c = states('input_number.gas_grid_operator_costs') | float / 52 %}
+          {% set d = states('input_number.gas_fixed_delivery_costs') | float / 52 %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_cost_this_month:
+        friendly_name: Gas cost this month
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.gas_consumption_monthly') | float %}
+          {% set b = states('input_number.gas_price') | float %}
+          {% set c = states('input_number.gas_grid_operator_costs') | float / 12 %}
+          {% set d = states('input_number.gas_fixed_delivery_costs') | float / 12 %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_cost_last_month:
+        friendly_name: Gas cost last month
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.gas_consumption_last_month') | float %}
+          {% set b = states('input_number.gas_price') | float %}
+          {% set c = states('input_number.gas_grid_operator_costs') | float / 12 %}
+          {% set d = states('input_number.gas_fixed_delivery_costs') | float / 12 %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_cost_this_year:
+        friendly_name: Gas cost this year
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.gas_consumption_yearly') | float %}
+          {% set b = states('input_number.gas_price') | float %}
+          {% set c = states('input_number.gas_grid_operator_costs') | float %}
+          {% set d = states('input_number.gas_fixed_delivery_costs') | float %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_cost_last_year:
+        friendly_name: Gas cost last year
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.gas_consumption_last_year') | float %}
+          {% set b = states('input_number.gas_price') | float %}
+          {% set c = states('input_number.gas_grid_operator_costs') | float %}
+          {% set d = states('input_number.gas_fixed_delivery_costs') | float %}
+          {{ (((a * b) + c) + d) | round(2) }}

@@ -1,0 +1,513 @@
+#Vervang <...> door de waarde die je wenst te gebruiken. Sensor entity namen kunnen geen hoofdletters bevatten.
+#<Valuta> - Verander de valuta output naar de correcte eenheid. De eenheid komt altijd achter de output waarde van de sensor.
+
+input_number:
+  stroom_prijs:                         #Vul bij initial de stroom prijs in.
+    name: Stroom prijs
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    step: 0.001
+    unit_of_measurement: "€/kWh"
+  stroom_netbeheerkosten:               #Vul bij initial de netbeheerkosten per jaar in.
+    name: Stroom netbeheerkosten
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    step: 0.01
+    unit_of_measurement: "€/jaar"
+  stroom_vaste_leveringskosten:         #Vul bij initial de vaste leveringskosten per jaar in.
+    name: Stroom vaste leveringskosten
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0.00
+    max: 9999.00
+    step: 0.01
+    unit_of_measurement: "€/jaar"
+  stroom_vermindering_energiebelasting: #Vul bij initial de vermindering energiebelasting per jaar in.
+    name: Stroom vermindering energiebelasting
+    icon: mdi:currency-eur-off
+    mode: box
+    initial: -
+    min: -9999.00
+    max: 0
+    step: 0.01
+    unit_of_measurement: "€/jaar"
+
+  # GAS TARIEVEN
+  gas_prijs:                            #Vul bij initial de gas prijs in.
+    name: Gas prijs
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    step: 0.001
+    unit_of_measurement: "€/m3"
+  gas_netbeheerkosten:                  #Vul bij initial de netbeheerkosten per jaar in.
+    name: Gas netbeheerkosten
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    step: 0.01
+    unit_of_measurement: "€/jaar"
+  gas_vaste_leveringskosten:            #Vul bij initial de vaste leveringskosten per jaar in.
+    name: Gas vaste leveringskosten
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    step: 0.01
+    unit_of_measurement: "€/jaar"
+
+utility_meter:          ###### STROOMMETER WAARDES ######
+  stroom_verbruik_per_uur_normaaltarief:
+    source: #Vul hier het entity id van je kWh stroomverbruik sensor voor normaaltarief in.
+    cycle: hourly
+  stroom_verbruik_per_uur_daltarief:
+    source: #Vul hier het entity id van je kWh stroomverbruik sensor voor daltarief in.
+    cycle: hourly
+  gas_verbruik_per_uur:
+    source: #Vul hier het entity id van je gas verbruik sensor in.
+    cycle: hourly
+
+  stroom_verbruik_dagelijks_normaaltarief:
+    source: #Vul hier het entity id van je kWh stroomverbruik sensor voor normaaltarief in.
+    cycle: daily
+  stroom_verbruik_dagelijks_daltarief:
+    source: #Vul hier het entity id van je kWh stroomverbruik sensor voor daltarief in.
+    cycle: daily
+  gas_verbruik_dagelijks:
+    source: #Vul hier het entity id van je gas verbruik sensor in.
+    cycle: daily
+
+  stroom_verbruik_wekelijks_normaaltarief:
+    source: #Vul hier het entity id van je kWh stroomverbruik sensor voor normaaltarief in.
+    cycle: weekly
+  stroom_verbruik_wekelijks_daltarief:
+    source: #Vul hier het entity id van je kWh stroomverbruik sensor voor daltarief in.
+    cycle: weekly
+  gas_verbruik_wekelijks:
+    source: #Vul hier het entity id van je gas verbruik sensor in.
+    cycle: weekly
+
+  stroom_verbruik_maandelijks_normaaltarief:
+    source: #Vul hier het entity id van je kWh stroomverbruik sensor voor normaaltarief in.
+    cycle: monthly
+  stroom_verbruik_maandelijks_daltarief:
+    source: #Vul hier het entity id van je kWh stroomverbruik sensor voor daltarief in.
+    cycle: monthly
+  gas_verbruik_maandelijks:
+    source: #Vul hier het entity id van je gas verbruik sensor in.
+    cycle: monthly
+
+  stroom_verbruik_jaarlijks_normaaltarief:
+    source: #Vul hier het entity id van je kWh stroomverbruik sensor voor normaaltarief in.
+    cycle: yearly
+  stroom_verbruik_jaarlijks_daltarief:
+    source: #Vul hier het entity id van je kWh stroomverbruik sensor voor daltarief in.
+    cycle: yearly
+  gas_verbruik_jaarlijks:
+    source: #Vul hier het entity id van je gas verbruik sensor in.
+    cycle: yearly
+
+sensor:
+  - platform: template
+    sensors:
+      stroom_huidig_tarief:         #Vul het entity ID in van de huidige tarief sensor van je slimme meter en de waardes van deze sensor onderstaand in.
+        friendly_name: "Huidig tarief"
+        icon_template: mdi:flash
+        value_template: >-
+          {% if is_state('sensor.power_tariff', 'normal') %} 
+            Normaaltarief
+          {% elif is_state('sensor.power_tariff', 'low') %}
+            Daltarief
+          {% else %}
+            Onbekend
+          {% endif %}
+
+      # BEREKENINGEN
+      stroom_momenteel_verbruik_watt:               #Voeg je stroom verbruik sensor hier toe. Als de input in Watt is, verwijder "* 1000".
+        friendly_name: "Momenteel verbruik"
+        icon_template: mdi:flash
+        unit_of_measurement: "Watt"
+        value_template: "{{ (states.sensor.power_consumption.state | float * 1000) | round(0) }}"
+      stroom_momenteel_verbruik_kilowatt:           #Voeg je stroom verbruik sensor hier toe. Als de input in Watt is, voeg " / 1000" tussen "float" and ")" toe.
+        friendly_name: "Momenteel verbruik"
+        icon_template: mdi:flash
+        unit_of_measurement: "kW"
+        value_template: "{{ (states.sensor.power_consumption.state | float) | round(0) }}"
+
+      # GEMIDDELDES
+      stroom_verbruik_gemiddeld_per_dag:
+        friendly_name: Stroom verbruik gemiddeld/dag
+        icon_template: mdi:home-analytics
+        unit_of_measurement: "kWh"
+        value_template: >-
+          {% set a = states('sensor.stroom_verbruik_vorige_maand') | float %}
+          {{ (a / 30.41) | round(3) }}
+      gas_verbruik_gemiddeld_per_dag:
+        friendly_name: Gas verbruik gemiddeld/dag
+        icon_template: mdi:home-analytics
+        unit_of_measurement: "m3"
+        value_template: >-
+          {% set a = states('sensor.gas_verbruik_vorige_maand') | float %}
+          {{ (a / 30.41) | round(3) }}
+
+      # CALCULATIE STROOM NORMAALTARIEF + DALTARIEF
+      stroom_verbruik_per_uur:
+        friendly_name: Stroom verbruik per uur
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ states('sensor.stroom_verbruik_per_uur_normaaltarief')|float + states('sensor.stroom_verbruik_per_uur_daltarief')|float }}"
+      stroom_verbruik_dagelijks:
+        friendly_name: Stroom verbruik dagelijks
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ states('sensor.stroom_verbruik_dagelijks_normaaltarief')|float + states('sensor.stroom_verbruik_dagelijks_daltarief')|float }}"
+      stroom_verbruik_wekelijks:
+        friendly_name: Stroom verbruik wekelijks
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ states('sensor.stroom_verbruik_wekelijks_normaaltarief')|float + states('sensor.stroom_verbruik_wekelijks_daltarief')|float }}"
+      stroom_verbruik_maandelijks:
+        friendly_name: Stroom verbruik maandelijks
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ states('sensor.stroom_verbruik_maandelijks_normaaltarief')|float + states('sensor.stroom_verbruik_maandelijks_daltarief')|float }}"
+      stroom_verbruik_jaarlijks:
+        friendly_name: Stroom verbruik jaarlijks
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ states('sensor.stroom_verbruik_jaarlijks_normaaltarief')|float + states('sensor.stroom_verbruik_jaarlijks_daltarief')|float }}"
+
+      # STROOM LAATSTE PERIODE
+      stroom_verbruik_gisteren:
+        friendly_name: Stroom verbruik gisteren
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.stroom_verbruik_dagelijks_normaaltarief','last_period')|float + state_attr('sensor.stroom_verbruik_dagelijks_daltarief','last_period')|float }}"
+      stroom_verbruik_vorige_week:
+        friendly_name: Stroom verbruik vorige week
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.stroom_verbruik_wekelijks_normaaltarief','last_period')|float + state_attr('sensor.stroom_verbruik_wekelijks_daltarief','last_period')|float }}"
+      stroom_verbruik_vorige_maand:
+        friendly_name: Stroom verbruik vorige maand
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.stroom_verbruik_maandelijks_normaaltarief','last_period')|float + state_attr('sensor.stroom_verbruik_maandelijks_daltarief','last_period')|float }}"
+      stroom_verbruik_vorig_jaar:
+        friendly_name: Stroom verbruik vorig jaar
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.stroom_verbruik_jaarlijks_normaaltarief','last_period')|float + state_attr('sensor.stroom_verbruik_jaarlijks_daltarief','last_period')|float }}"
+
+      # STROOM NORMAALTARIEF LAATSTE PERIODE
+      stroom_verbruik_gisteren_normaaltarief:
+        friendly_name: Stroom verbruik gisteren normaaltarief
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.stroom_verbruik_dagelijks_normaaltarief','last_period')|float }}"
+      stroom_verbruik_vorige_week_normaaltarief:
+        friendly_name: Stroom verbruik vorige week normaaltarief
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.stroom_verbruik_wekelijks_normaaltarief','last_period')|float }}"
+      stroom_verbruik_vorige_maand_normaaltarief:
+        friendly_name: Stroom verbruik vorige maand normaaltarief
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.stroom_verbruik_maandelijks_normaaltarief','last_period')|float }}"
+      stroom_verbruik_vorig_jaar_normaaltarief:
+        friendly_name: Stroom verbruik vorig jaar normaaltarief
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.stroom_verbruik_jaarlijks_normaaltarief','last_period')|float }}"
+
+      # STROOM DALTARIEF LAATSTE PERIODE
+      stroom_verbruik_gisteren_daltarief:
+        friendly_name: Stroom verbruik gisteren daltarief
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.stroom_verbruik_dagelijks_daltarief','last_period')|float }}"
+      stroom_verbruik_vorige_week_daltarief:
+        friendly_name: Stroom verbruik vorige week daltarief
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.stroom_verbruik_wekelijks_daltarief','last_period')|float }}"
+      stroom_verbruik_vorige_maand_daltarief:
+        friendly_name: Stroom verbruik vorige maand daltarief
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.stroom_verbruik_maandelijks_daltarief','last_period')|float }}"
+      stroom_verbruik_vorig_jaar_daltarief:
+        friendly_name: Stroom verbruik vorig jaar daltarief
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.stroom_verbruik_jaarlijks_daltarief','last_period')|float }}"
+
+      # STROOM KORT
+      stroom_verbruik_dagelijks_kort:
+        friendly_name: Stroom verbruik dagelijks
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.stroom_verbruik_dagelijks') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      stroom_verbruik_gisteren_kort:
+        friendly_name: Stroom verbruik gisteren
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.stroom_verbruik_gisteren') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      stroom_verbruik_wekelijks_kort:
+        friendly_name: Stroom verbruik wekelijks
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.stroom_verbruik_wekelijks') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      stroom_verbruik_vorige_week_kort:
+        friendly_name: Stroom verbruik vorige week
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.stroom_verbruik_vorige_week') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      stroom_verbruik_maandelijks_kort:
+        friendly_name: Stroom verbruik maandelijks
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.stroom_verbruik_maandelijks') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      stroom_verbruik_vorige_maand_kort:
+        friendly_name: Stroom verbruik vorige maand
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.stroom_verbruik_vorige_maand') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      stroom_verbruik_jaarlijks_kort:
+        friendly_name: Stroom verbruik jaarlijks
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.stroom_verbruik_jaarlijks') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      stroom_verbruik_vorig_jaar_kort:
+        friendly_name: Stroom verbruik vorig jaar
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.stroom_verbruik_vorig_jaar') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      # GAS LAATSTE PERIODE
+      gas_verbruik_gisteren:
+        friendly_name: Gas verbruik gisteren
+        icon_template: mdi:counter
+        unit_of_measurement: m3
+        value_template: "{{ state_attr('sensor.gas_verbruik_dagelijks','last_period') }}"
+      gas_verbruik_vorige_week:
+        friendly_name: Gas verbruik vorige week
+        icon_template: mdi:counter
+        unit_of_measurement: m3
+        value_template: "{{ state_attr('sensor.gas_verbruik_wekelijks','last_period') }}"
+      gas_verbruik_vorige_maand:
+        friendly_name: Gas verbruik vorige maand
+        icon_template: mdi:counter
+        unit_of_measurement: m3
+        value_template: "{{ state_attr('sensor.gas_verbruik_maandelijks','last_period') }}"
+      gas_verbruik_vorig_jaar:
+        friendly_name: Gas verbruik vorig jaar
+        icon_template: mdi:counter
+        unit_of_measurement: m3
+        value_template: "{{ state_attr('sensor.gas_verbruik_jaarlijks','last_period') }}"
+
+      # STROOM KOSTEN
+      stroom_kosten_vandaag:
+        friendly_name: Stroom kosten vandaag
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.stroom_verbruik_dagelijks') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {% set c = states('input_number.stroom_netbeheerkosten') | float / 365 %}
+          {% set d = states('input_number.stroom_vaste_leveringskosten') | float / 365 %}
+          {% set e = states('input_number.stroom_vermindering_energiebelasting') | float / 365 %}
+          {{ ((((a * b) + c) + d) + e) | round(2) }}
+
+      stroom_kosten_gisteren:
+        friendly_name: Stroom kosten gisteren
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.stroom_verbruik_gisteren') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {% set c = states('input_number.stroom_netbeheerkosten') | float / 365 %}
+          {% set d = states('input_number.stroom_vaste_leveringskosten') | float / 365 %}
+          {% set e = states('input_number.stroom_vermindering_energiebelasting') | float / 365 %}
+          {{ ((((a * b) + c) + d) + e) | round(2) }}
+
+      stroom_kosten_deze_week:
+        friendly_name: Stroom kosten deze week
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.stroom_verbruik_wekelijks') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {% set c = states('input_number.stroom_netbeheerkosten') | float / 52 %}
+          {% set d = states('input_number.stroom_vaste_leveringskosten') | float / 52 %}
+          {% set e = states('input_number.stroom_vermindering_energiebelasting') | float / 52 %}
+          {{ ((((a * b) + c) + d) + e) | round(2) }}
+
+      stroom_kosten_vorige_week:
+        friendly_name: Stroom kosten vorige week
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.stroom_verbruik_vorige_week') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {% set c = states('input_number.stroom_netbeheerkosten') | float / 52 %}
+          {% set d = states('input_number.stroom_vaste_leveringskosten') | float / 52 %}
+          {% set e = states('input_number.stroom_vermindering_energiebelasting') | float / 52 %}
+          {{ ((((a * b) + c) + d) + e) | round(2) }}
+
+      stroom_kosten_deze_maand:
+        friendly_name: Stroom kosten deze maand
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.stroom_verbruik_maandelijks') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {% set c = states('input_number.stroom_netbeheerkosten') | float / 12 %}
+          {% set d = states('input_number.stroom_vaste_leveringskosten') | float / 12 %}
+          {% set e = states('input_number.stroom_vermindering_energiebelasting') | float / 12 %}
+          {{ ((((a * b) + c) + d) + e) | round(2) }}
+
+      stroom_kosten_vorige_maand:
+        friendly_name: Stroom kosten vorige maand
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.stroom_verbruik_vorige_maand') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {% set c = states('input_number.stroom_netbeheerkosten') | float / 12 %}
+          {% set d = states('input_number.stroom_vaste_leveringskosten') | float / 12 %}
+          {% set e = states('input_number.stroom_vermindering_energiebelasting') | float / 12 %}
+          {{ ((((a * b) + c) + d) + e) | round(2) }}
+
+      stroom_kosten_dit_jaar:
+        friendly_name: Stroom kosten dit jaar
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.stroom_verbruik_jaarlijks') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {% set c = states('input_number.stroom_netbeheerkosten') | float %}
+          {% set d = states('input_number.stroom_vaste_leveringskosten') | float %}
+          {% set e = states('input_number.stroom_vermindering_energiebelasting') | float %}
+          {{ ((((a * b) + c) + d) + e) | round(2) }}
+
+      stroom_kosten_vorig_jaar:
+        friendly_name: Stroom kosten vorig jaar
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.stroom_verbruik_vorig_jaar') | float %}
+          {% set b = states('input_number.stroom_prijs') | float %}
+          {% set c = states('input_number.stroom_netbeheerkosten') | float %}
+          {% set d = states('input_number.stroom_vaste_leveringskosten') | float %}
+          {% set e = states('input_number.stroom_vermindering_energiebelasting') | float %}
+          {{ ((((a * b) + c) + d) + e) | round(2) }}
+
+      #  GAS PRIJZEN
+      gas_kosten_vandaag:
+        friendly_name: Gas kosten vandaag
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.gas_verbruik_dagelijks') | float %}
+          {% set b = states('input_number.gas_prijs') | float %}
+          {% set c = states('input_number.gas_netbeheerkosten') | float / 365 %}
+          {% set d = states('input_number.gas_vaste_leveringskosten') | float / 365 %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_kosten_gisteren:
+        friendly_name: Gas kosten gisteren
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.gas_verbruik_gisteren') | float %}
+          {% set b = states('input_number.gas_prijs') | float %}
+          {% set c = states('input_number.gas_netbeheerkosten') | float / 365 %}
+          {% set d = states('input_number.gas_vaste_leveringskosten') | float / 365 %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_kosten_deze_week:
+        friendly_name: Gas kosten deze week
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.gas_verbruik_wekelijks') | float %}
+          {% set b = states('input_number.gas_prijs') | float %}
+          {% set c = states('input_number.gas_netbeheerkosten') | float / 52 %}
+          {% set d = states('input_number.gas_vaste_leveringskosten') | float / 52 %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_kosten_vorige_week:
+        friendly_name: Gas kosten vorige week
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.gas_verbruik_vorige_week') | float %}
+          {% set b = states('input_number.gas_prijs') | float %}
+          {% set c = states('input_number.gas_netbeheerkosten') | float / 52 %}
+          {% set d = states('input_number.gas_vaste_leveringskosten') | float / 52 %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_kosten_deze_maand:
+        friendly_name: Gas kosten deze maand
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.gas_verbruik_maandelijks') | float %}
+          {% set b = states('input_number.gas_prijs') | float %}
+          {% set c = states('input_number.gas_netbeheerkosten') | float / 12 %}
+          {% set d = states('input_number.gas_vaste_leveringskosten') | float / 12 %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_kosten_vorige_maand:
+        friendly_name: Gas kosten vorige maand
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.gas_verbruik_vorige_maand') | float %}
+          {% set b = states('input_number.gas_prijs') | float %}
+          {% set c = states('input_number.gas_netbeheerkosten') | float / 12 %}
+          {% set d = states('input_number.gas_vaste_leveringskosten') | float / 12 %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_kosten_dit_jaar:
+        friendly_name: Gas kosten dit jaar
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.gas_verbruik_jaarlijks') | float %}
+          {% set b = states('input_number.gas_prijs') | float %}
+          {% set c = states('input_number.gas_netbeheerkosten') | float %}
+          {% set d = states('input_number.gas_vaste_leveringskosten') | float %}
+          {{ (((a * b) + c) + d) | round(2) }}
+
+      gas_kosten_vorig_jaar:
+        friendly_name: Gas kosten vorig jaar
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Valuta>"
+        value_template: >-
+          {% set a = states('sensor.gas_verbruik_vorig_jaar') | float %}
+          {% set b = states('input_number.gas_prijs') | float %}
+          {% set c = states('input_number.gas_netbeheerkosten') | float %}
+          {% set d = states('input_number.gas_vaste_leveringskosten') | float %}
+          {{ (((a * b) + c) + d) | round(2) }}

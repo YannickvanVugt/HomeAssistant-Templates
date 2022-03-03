@@ -1,0 +1,222 @@
+#Replace <...> by the value you wish to use. Sensor entity names can not contain capital letters.
+#<appliance_sensorname> - Appliance name in Entity IDs.
+#<Appliance-Name> - Appliance display name.
+#<Currency> - Change currency output to the correct unit. The unit is always displayed behind the output value of the sensor.
+
+input_number:                       #Remove the input_number block if you already have a power price input.
+  power_price:                          #Enter the power price at initials and adjust unit_of_measurement.
+    name: Power price
+    icon: mdi:currency-eur
+    mode: box
+    initial: 
+    min: 0
+    max: 9999
+    mode: box
+    step: 0.001
+    unit_of_measurement: "€/kWh"
+
+sensor wattage-to-kwh:          #The Integration sensor can be used if the appliance or smart plug does not store the total power usage in kWh. If your appliance or plug does have this, you can remove this block.
+  - platform: integration
+    source: #Wattage Source Sensor -> Enter your wattage source sensor here of the device itself or a smart plug.
+    name: #Wattage to kWh sensor name (Entity id) -> This will be used as the utility_meter source kwh sensors.
+    unit_prefix: k
+    round: 2
+    method: left
+          
+utility_meter:          ###### POWERMETER VALUES ######
+  <appliance_sensorname>_power_consumption_hourly:
+    source: #Enter here the entity id of your kWh power consumption sensor of the device itself, a smart plug or the integration sensor above.
+    cycle: hourly
+  <appliance_sensorname>_power_consumption_daily:
+    source: #Enter here the entity id of your kWh power consumption sensor of the device itself, a smart plug or the integration sensor above.
+    cycle: daily
+  <appliance_sensorname>_power_consumption_weekly:
+    source: #Enter here the entity id of your kWh power consumption sensor of the device itself, a smart plug or the integration sensor above.
+    cycle: weekly
+  <appliance_sensorname>_power_consumption_monthly:
+    source: #Enter here the entity id of your kWh power consumption sensor of the device itself, a smart plug or the integration sensor above.
+    cycle: monthly
+  <appliance_sensorname>_power_consumption_yearly:
+    source: #Enter here the entity id of your kWh power consumption sensor of the device itself, a smart plug or the integration sensor above.
+    cycle: yearly
+    
+homeassistant:
+  customize:
+    sensor.<appliance_sensorname>_power_consumption_hourly:
+      friendly_name: <Appliance-Name> - Power consumption hourly
+    sensor.<appliance_sensorname>_power_consumption_daily:
+      friendly_name: <Appliance-Name> - Power consumption daily
+    sensor.<appliance_sensorname>_power_consumption_weekly:
+      friendly_name: <Appliance-Name> - Power consumption weekly
+    sensor.<appliance_sensorname>_power_consumption_monthly:
+      friendly_name: <Appliance-Name> - Power consumption monthly
+    sensor.<appliance_sensorname>_power_consumption_yearly:
+      friendly_name: <Appliance-Name> - Power consumption yearly
+      
+sensor:
+  - platform: template
+    sensors:
+      # CALCULATIONS
+      <appliance_sensorname>_power_current_consumption_watt:                #Add your appliance power consumption sensor here. If input is in Watt, remove "* 1000".
+        friendly_name: "<Appliance-Name> - Current consumption"
+        icon_template: mdi:flash
+        unit_of_measurement: "Watt"
+        value_template: "{{ (states.sensor.<appliance_wattage_source_sensor>.state | float * 1000) | round(0) }}"
+      <appliance_sensorname>_power_current_consumption_kilowatt:            #Add your appliance power consumption sensor here. If input is in Watt, add " / 1000" between "float" and ")".
+        friendly_name: "<Appliance-Name> - Current consumption"
+        icon_template: mdi:flash
+        unit_of_measurement: "kW"
+        value_template: "{{ (states.sensor.<appliance_wattage_source_sensor>.state | float) | round(0) }}"
+
+      # AVERAGES
+      <appliance_sensorname>_power_consumption_average_per_day:
+        friendly_name: <Appliance-Name> - Power consumption average/day
+        icon_template: mdi:home-analytics
+        unit_of_measurement: "kWh"
+        value_template: >-
+          {% set a = states('sensor.<appliance_sensorname>_power_consumption_last_month') | float %}
+          {{ (a / 30.41) | round(3) }}
+
+      # POWER LAST PERIODS
+      <appliance_sensorname>_power_consumption_yesterday:
+        friendly_name: <Appliance-Name> - Power consumption yesterday
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.<appliance_sensorname>_power_consumption_daily','last_period')|float }}"
+      <appliance_sensorname>_power_consumption_last_week:
+        friendly_name: <Appliance-Name> - Power consumption last week
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.<appliance_sensorname>_power_consumption_weekly','last_period')|float }}"
+      <appliance_sensorname>_power_consumption_last_month:
+        friendly_name: <Appliance-Name> - Power consumption last month
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.<appliance_sensorname>_power_consumption_monthly','last_period')|float }}"
+      <appliance_sensorname>_power_consumption_last_year:
+        friendly_name: <Appliance-Name> - Power consumption last year
+        icon_template: mdi:counter
+        unit_of_measurement: kWh
+        value_template: "{{ state_attr('sensor.<appliance_sensorname>_power_consumption_yearly','last_period')|float }}"
+
+      # POWER SHORT
+      <appliance_sensorname>_power_consumption_daily_short:
+        friendly_name: <Appliance-Name> - Power consumption daily
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<appliance_sensorname>_power_consumption_daily') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <appliance_sensorname>_power_consumption_yesterday_short:
+        friendly_name: <Appliance-Name> - Power consumption yesterday
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<appliance_sensorname>_power_consumption_yesterday') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <appliance_sensorname>_power_consumption_weekly_short:
+        friendly_name: <Appliance-Name> - Power consumption weekly
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<appliance_sensorname>_power_consumption_weekly') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <appliance_sensorname>_power_consumption_last_week_short:
+        friendly_name: <Appliance-Name> - Power consumption last week
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<appliance_sensorname>_power_consumption_last_week') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <appliance_sensorname>_power_consumption_monthly_short:
+        friendly_name: <Appliance-Name> - Power consumption monthly
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<appliance_sensorname>_power_consumption_monthly') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <appliance_sensorname>_power_consumption_last_month_short:
+        friendly_name: <Appliance-Name> - Power consumption last month
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<appliance_sensorname>_power_consumption_last_month') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <appliance_sensorname>_power_consumption_yearly_short:
+        friendly_name: <Appliance-Name> - Power consumption yearly
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<appliance_sensorname>_power_consumption_yearly') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      <appliance_sensorname>_power_consumption_last_year_short:
+        friendly_name: <Appliance-Name> - Power consumption last year
+        icon_template: mdi:counter
+        value_template: "{{ '%.3f'%(states('sensor.<appliance_sensorname>_power_consumption_last_year') | float) | float }}"
+        unit_of_measurement: "kWh"
+
+      # POWER COST
+      <appliance_sensorname>_power_cost_today:
+        friendly_name: <Appliance-Name> - Power cost today
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.<appliance_sensorname>_power_consumption_daily') | float %}
+          {% set b = states('input_number.power_price') | float %}
+          {{ (a * b) | round(2) }}
+
+      <appliance_sensorname>_power_cost_yesterday:
+        friendly_name: <Appliance-Name> - Power cost yesterday
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.<appliance_sensorname>_power_consumption_yesterday') | float %}
+          {% set b = states('input_number.power_price') | float %}
+          {{ (a * b) | round(2) }}
+
+      <appliance_sensorname>_power_cost_this_week:
+        friendly_name: <Appliance-Name> - Power cost this week
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.<appliance_sensorname>_power_consumption_weekly') | float %}
+          {% set b = states('input_number.power_price') | float %}
+          {{ (a * b) | round(2) }}
+
+      <appliance_sensorname>_power_cost_last_week:
+        friendly_name: <Appliance-Name> - Power cost last week
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.<appliance_sensorname>_power_consumption_last_week') | float %}
+          {% set b = states('input_number.power_price') | float %}
+          {{ (a * b) | round(2) }}
+
+      <appliance_sensorname>_power_cost_this_month:
+        friendly_name: <Appliance-Name> - Power cost this month
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.<appliance_sensorname>_power_consumption_monthly') | float %}
+          {% set b = states('input_number.power_price') | float %}
+          {{ (a * b) | round(2) }}
+
+      <appliance_sensorname>_power_cost_last_month:
+        friendly_name: <Appliance-Name> - Power cost last month
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.<appliance_sensorname>_power_consumption_last_month') | float %}
+          {% set b = states('input_number.power_price') | float %}
+          {{ (a * b) | round(2) }}
+
+      <appliance_sensorname>_power_cost_this_year:
+        friendly_name: <Appliance-Name> - Power cost this year
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.<appliance_sensorname>_power_consumption_yearly') | float %}
+          {% set b = states('input_number.power_price') | float %}
+          {{ (a * b) | round(2) }}
+
+      <appliance_sensorname>_power_cost_last_year:
+        friendly_name: <Appliance-Name> - Power cost last year
+        icon_template: mdi:currency-eur
+        unit_of_measurement: "<Currency>"
+        value_template: >-
+          {% set a = states('sensor.<appliance_sensorname>_power_consumption_last_year') | float %}
+          {% set b = states('input_number.power_price') | float %}
+          {{ (a * b) | round(2) }}
